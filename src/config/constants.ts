@@ -8,6 +8,7 @@ export const SUPPORTED_EXTENSIONS = ['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.
 
 export const SORT_PATTERNS = {
   ARTIST_FOLDER: 'by-artist',
+  ALBUM_ARTIST_FOLDER: 'by-album-artist',
   ALBUM_FOLDER: 'by-album',
   GENRE_FOLDER: 'by-genre',
   YEAR_FOLDER: 'by-year'

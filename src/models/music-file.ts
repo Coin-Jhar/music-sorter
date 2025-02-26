@@ -2,6 +2,7 @@
 export interface MusicMetadata {
   title?: string;
   artist?: string;
+  albumArtist?: string;
   album?: string;
   year?: number;
   genre?: string;
