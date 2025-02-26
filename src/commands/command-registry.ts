@@ -7,6 +7,7 @@ import { serverCommand } from './server-command';
 // import { renameCommand } from './rename-command';
 
 export function setupCommands(program: Command): void {
+  // Register all commands
   sortCommand(program);
   undoCommand(program);
   serverCommand(program);

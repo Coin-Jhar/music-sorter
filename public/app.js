@@ -163,11 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     document.head.appendChild(style);
   }
-  
-  // Initialize the app
-  addDynamicStyles();
-  init();
-});
 
   // Load configuration
   async function loadConfig() {
@@ -421,3 +416,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 50);
     }
   }
+
+  // Initialize the app
+  addDynamicStyles();
+  init();
+});

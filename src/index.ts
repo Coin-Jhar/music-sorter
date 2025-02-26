@@ -1,3 +1,4 @@
+// src/index.ts
 import { Command } from 'commander';
 import { setupCommands } from './commands/command-registry';
 
