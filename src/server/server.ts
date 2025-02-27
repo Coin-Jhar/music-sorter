@@ -8,6 +8,7 @@ import { FileOperations } from '../utils/file-operations';
 import { MetadataService } from '../services/metadata-service';
 import { PATHS, SUPPORTED_EXTENSIONS } from '../config/constants';
 import { logger } from '../utils/logger';
+import { settingsManager } from '../config/settings-manager';
 
 export async function startServer(port: number = 3000): Promise<void> {
   const app = express();
@@ -20,6 +21,9 @@ export async function startServer(port: number = 3000): Promise<void> {
   const publicPath = path.join(__dirname, '../../public');
   logger.info(`Serving static files from: ${publicPath}`);
   app.use(express.static(publicPath));
+  
+  // Initialize settings at server start
+  await settingsManager.initialize();
   
   // Get configuration
   app.get('/api/config', function(req, res) {
@@ -194,6 +198,84 @@ export async function startServer(port: number = 3000): Promise<void> {
         logger.error('Error during undo operation:', error as Error);
         res.status(500).json({ success: false, error: (error as Error).message });
       });
+  });
+
+  // Get settings
+  app.get('/api/settings', async function(req, res) {
+    try {
+      const settings = await settingsManager.getAll();
+      res.json({ success: true, settings });
+    } catch (error) {
+      logger.error('Error getting settings:', error as Error);
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Update settings
+  app.post('/api/settings', async function(req, res) {
+    try {
+      const updatedSettings = req.body;
+      await settingsManager.updateSettings(updatedSettings);
+      res.json({ success: true, message: 'Settings updated successfully' });
+    } catch (error) {
+      logger.error('Error updating settings:', error as Error);
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Reset settings
+  app.post('/api/settings/reset', async function(req, res) {
+    try {
+      await settingsManager.resetToDefaults();
+      res.json({ success: true, message: 'Settings reset to defaults' });
+    } catch (error) {
+      logger.error('Error resetting settings:', error as Error);
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Add custom pattern
+  app.post('/api/settings/patterns/:type', async function(req, res) {
+    try {
+      const { type } = req.params;
+      const { pattern } = req.body;
+      
+      if (type !== 'rename' && type !== 'sort') {
+        return res.status(400).json({ success: false, error: 'Type must be either "rename" or "sort"' });
+      }
+      
+      if (!pattern) {
+        return res.status(400).json({ success: false, error: 'Pattern is required' });
+      }
+      
+      await settingsManager.addCustomPattern(type as 'rename' | 'sort', pattern);
+      res.json({ success: true, message: `Added custom ${type} pattern` });
+    } catch (error) {
+      logger.error('Error adding custom pattern:', error as Error);
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  });
+  
+  // Remove custom pattern
+  app.delete('/api/settings/patterns/:type', async function(req, res) {
+    try {
+      const { type } = req.params;
+      const { pattern } = req.body;
+      
+      if (type !== 'rename' && type !== 'sort') {
+        return res.status(400).json({ success: false, error: 'Type must be either "rename" or "sort"' });
+      }
+      
+      if (!pattern) {
+        return res.status(400).json({ success: false, error: 'Pattern is required' });
+      }
+      
+      await settingsManager.removeCustomPattern(type as 'rename' | 'sort', pattern);
+      res.json({ success: true, message: `Removed custom ${type} pattern` });
+    } catch (error) {
+      logger.error('Error removing custom pattern:', error as Error);
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
   });
   
   // Fallback route - serve the main HTML file for any unmatched routes
