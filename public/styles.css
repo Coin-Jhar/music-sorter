@@ -84,6 +84,11 @@ body {
   color: var(--primary-color);
 }
 
+.app-bar-actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* Main Content */
 .main-content {
   padding: 16px 0 80px;
@@ -110,6 +115,10 @@ body {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.dark-theme .card-title {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .card-title h2 {
@@ -435,6 +444,134 @@ label {
   cursor: pointer;
 }
 
+/* File list styles */
+.file-list {
+  background-color: var(--background-color);
+  border-radius: 4px;
+  padding: 12px;
+  margin-top: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.file-list ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.file-list li {
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.dark-theme .file-list li {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Settings section styles */
+.settings-section {
+  margin-bottom: 24px;
+}
+
+.settings-section h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: var(--primary-color);
+}
+
+.patterns-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.pattern-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--background-color);
+  border-radius: 16px;
+  padding: 4px 12px;
+  margin-bottom: 8px;
+}
+
+.pattern-chip .pattern-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Modal styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 100;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+  animation: fadeIn var(--anim-duration-medium) ease;
+}
+
+.modal-content {
+  position: relative;
+  margin: 10% auto;
+  max-width: 600px;
+  animation: slideIn var(--anim-duration-medium) ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Stats grid for analysis results */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  background-color: rgba(98, 0, 238, 0.08);
+  border-radius: 8px;
+  transition: transform 200ms ease;
+}
+
+.dark-theme .stat-card {
+  background-color: rgba(187, 134, 252, 0.08);
+}
+
+.stat-card:hover {
+  transform: scale(1.05);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin: 8px 0;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--on-surface);
+  opacity: 0.87;
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
   .app-bar-title h1 {
@@ -449,5 +586,10 @@ label {
   .snackbar {
     min-width: auto;
     width: calc(100% - 32px);
+  }
+  
+  .modal-content {
+    width: 90%;
+    margin: 20% auto;
   }
 }

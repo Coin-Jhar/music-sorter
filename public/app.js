@@ -19,16 +19,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const snackbar = document.getElementById('snackbar');
   const snackbarText = document.getElementById('snackbar-text');
   const snackbarAction = document.getElementById('snackbar-action');
+  const settingsBtn = document.getElementById('settings-btn');
+
+  // Settings-related elements (if present)
+  const saveSettingsBtn = document.getElementById('save-settings');
+  const resetSettingsBtn = document.getElementById('reset-settings');
 
   // State
   let darkMode = localStorage.getItem('darkMode') === 'true';
+  let currentSettings = null;
 
   // Initialize app
   function init() {
     // Apply theme
     updateTheme();
     
-    // Set default values
+    // Load settings and configuration
     loadConfig();
     
     // Attach event listeners
@@ -160,25 +166,279 @@ document.addEventListener('DOMContentLoaded', () => {
         margin-bottom: 12px;
         color: var(--primary-color);
       }
+      
+      .settings-section {
+        margin-bottom: 24px;
+      }
+      
+      .settings-section h3 {
+        margin-bottom: 16px;
+      }
+      
+      .patterns-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+      }
+      
+      .pattern-chip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: var(--background-color);
+        border-radius: 16px;
+        padding: 4px 12px;
+        margin-bottom: 8px;
+      }
+      
+      .pattern-chip .pattern-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
     `;
     document.head.appendChild(style);
   }
 
-  // Load configuration
+  // Load configuration and settings
   async function loadConfig() {
     try {
+      showStatus('Loading configuration...', 'indeterminate');
+      
       const response = await fetch('/api/config');
       const config = await response.json();
       
-      // Set input values
-      sourcePathInput.value = config.paths.SOURCE;
-      targetPathInput.value = config.paths.TARGET;
+      // Store current settings
+      currentSettings = config.settings;
       
-      // Display success message
+      // Set input values from settings
+      if (config.settings) {
+        sourcePathInput.value = config.settings.sourcePath;
+        targetPathInput.value = config.settings.targetPath;
+        
+        // Set copy mode checkbox from settings
+        if (copyModeCheckbox) {
+          copyModeCheckbox.checked = config.settings.copyByDefault;
+        }
+        
+        // Select the last used pattern if available
+        if (config.settings.lastUsedPattern && sortPatternSelect) {
+          const option = Array.from(sortPatternSelect.options).find(
+            opt => opt.value === config.settings.lastUsedPattern
+          );
+          
+          if (option) {
+            sortPatternSelect.value = config.settings.lastUsedPattern;
+          }
+        }
+        
+        // Populate custom patterns if present in the UI
+        if (config.settings.customPatterns) {
+          displayCustomPatterns(config.settings.customPatterns);
+        }
+      } else {
+        // Fallback to paths from config if settings aren't available
+        sourcePathInput.value = config.paths.SOURCE;
+        targetPathInput.value = config.paths.TARGET;
+      }
+      
+      // Hide loading status
+      statusCard.style.display = 'none';
       showSnackbar('Configuration loaded successfully');
     } catch (error) {
       console.error('Error loading configuration:', error);
+      showStatus('Error loading configuration', 'error');
       showSnackbar('Error loading configuration', 'RETRY', loadConfig);
+    }
+  }
+
+  // Display custom patterns in UI (if supported)
+  function displayCustomPatterns(customPatterns) {
+    // Check if the patterns containers exist in the DOM
+    const renamePatterns = document.getElementById('rename-patterns');
+    const sortPatterns = document.getElementById('sort-patterns');
+    
+    if (renamePatterns && customPatterns.rename) {
+      renamePatterns.innerHTML = '';
+      
+      if (customPatterns.rename.length === 0) {
+        renamePatterns.innerHTML = '<p>No custom rename patterns</p>';
+      } else {
+        const patternsGrid = document.createElement('div');
+        patternsGrid.className = 'patterns-grid';
+        
+        customPatterns.rename.forEach(pattern => {
+          const chip = document.createElement('div');
+          chip.className = 'pattern-chip';
+          
+          const patternText = document.createElement('span');
+          patternText.className = 'pattern-text';
+          patternText.textContent = pattern;
+          
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'icon-button';
+          deleteBtn.innerHTML = '<span class="material-icons">close</span>';
+          deleteBtn.onclick = () => removeCustomPattern('rename', pattern);
+          
+          chip.appendChild(patternText);
+          chip.appendChild(deleteBtn);
+          patternsGrid.appendChild(chip);
+        });
+        
+        renamePatterns.appendChild(patternsGrid);
+      }
+    }
+    
+    if (sortPatterns && customPatterns.sort) {
+      sortPatterns.innerHTML = '';
+      
+      if (customPatterns.sort.length === 0) {
+        sortPatterns.innerHTML = '<p>No custom sort patterns</p>';
+      } else {
+        const patternsGrid = document.createElement('div');
+        patternsGrid.className = 'patterns-grid';
+        
+        customPatterns.sort.forEach(pattern => {
+          const chip = document.createElement('div');
+          chip.className = 'pattern-chip';
+          
+          const patternText = document.createElement('span');
+          patternText.className = 'pattern-text';
+          patternText.textContent = pattern;
+          
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'icon-button';
+          deleteBtn.innerHTML = '<span class="material-icons">close</span>';
+          deleteBtn.onclick = () => removeCustomPattern('sort', pattern);
+          
+          chip.appendChild(patternText);
+          chip.appendChild(deleteBtn);
+          patternsGrid.appendChild(chip);
+        });
+        
+        sortPatterns.appendChild(patternsGrid);
+      }
+    }
+  }
+
+  // Add a custom pattern
+  async function addCustomPattern(type, pattern) {
+    try {
+      const response = await fetch(`/api/settings/patterns/${type}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ pattern })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        showSnackbar(`Added custom ${type} pattern`);
+        loadConfig(); // Reload settings to display the new pattern
+      } else {
+        showSnackbar(`Error: ${result.error}`, 'DISMISS');
+      }
+    } catch (error) {
+      console.error(`Error adding custom ${type} pattern:`, error);
+      showSnackbar(`Error adding pattern: ${error.message}`, 'DISMISS');
+    }
+  }
+
+  // Remove a custom pattern
+  async function removeCustomPattern(type, pattern) {
+    try {
+      const response = await fetch(`/api/settings/patterns/${type}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ pattern })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        showSnackbar(`Removed custom ${type} pattern`);
+        loadConfig(); // Reload settings to update the UI
+      } else {
+        showSnackbar(`Error: ${result.error}`, 'DISMISS');
+      }
+    } catch (error) {
+      console.error(`Error removing custom ${type} pattern:`, error);
+      showSnackbar(`Error removing pattern: ${error.message}`, 'DISMISS');
+    }
+  }
+
+  // Save current settings
+  async function saveSettings() {
+    try {
+      const settings = {
+        sourcePath: sourcePathInput.value,
+        targetPath: targetPathInput.value,
+        copyByDefault: copyModeCheckbox ? copyModeCheckbox.checked : false
+      };
+      
+      if (sortPatternSelect && sortPatternSelect.value) {
+        settings.defaultSortPattern = sortPatternSelect.value;
+      }
+      
+      showStatus('Saving settings...', 'indeterminate');
+      
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settings)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        showStatus('Settings saved!', 'success');
+        showSnackbar('Settings saved successfully');
+        currentSettings = { ...currentSettings, ...settings };
+      } else {
+        showStatus(`Error: ${result.error}`, 'error');
+        showSnackbar(`Error: ${result.error}`, 'DISMISS');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      showStatus(`Error: ${error.message}`, 'error');
+      showSnackbar(`Error saving settings: ${error.message}`, 'DISMISS');
+    }
+  }
+
+  // Reset settings to defaults
+  async function resetSettings() {
+    if (!confirm('Are you sure you want to reset all settings to defaults?')) {
+      return;
+    }
+    
+    try {
+      showStatus('Resetting settings...', 'indeterminate');
+      
+      const response = await fetch('/api/settings/reset', {
+        method: 'POST'
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        showStatus('Settings reset!', 'success');
+        showSnackbar('Settings reset to defaults');
+        loadConfig(); // Reload to display default settings
+      } else {
+        showStatus(`Error: ${result.error}`, 'error');
+        showSnackbar(`Error: ${result.error}`, 'DISMISS');
+      }
+    } catch (error) {
+      console.error('Error resetting settings:', error);
+      showStatus(`Error: ${error.message}`, 'error');
+      showSnackbar(`Error resetting settings: ${error.message}`, 'DISMISS');
     }
   }
 
@@ -209,215 +469,76 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Snackbar dismiss action
     snackbarAction.addEventListener('click', dismissSnackbar);
-  }
-
-  // Handle Sort operation
-  async function handleSort() {
-    try {
-      // Show loading state
-      showStatus('Sorting files...', 'indeterminate');
-      
-      const response = await fetch('/api/sort', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          pattern: sortPatternSelect.value,
-          sourcePath: sourcePathInput.value,
-          targetPath: targetPathInput.value,
-          copy: copyModeCheckbox.checked
-        })
+    
+    // Settings button (if present)
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', () => {
+        // Display settings in a modal or dedicated view
+        showSettings();
       });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        showStatus('Sorting complete!', 'success');
-        showSnackbar('Files sorted successfully');
-      } else {
-        showStatus(`Error: ${result.error}`, 'error');
-        showSnackbar(`Error: ${result.error}`, 'DISMISS');
-      }
-    } catch (error) {
-      console.error('Error during sort operation:', error);
-      showStatus(`Error: ${error.message}`, 'error');
-      showSnackbar(`Error: ${error.message}`, 'DISMISS');
-    }
-  }
-
-  // Handle Scan operation
-  async function handleScan() {
-    try {
-      // Show loading state
-      showStatus('Scanning files...', 'indeterminate');
-      
-      const response = await fetch(`/api/scan?path=${encodeURIComponent(sourcePathInput.value)}`);
-      const result = await response.json();
-      
-      if (result.success) {
-        showStatus(`Found ${result.files.length} files`, 'success');
-        
-        // Show results
-        showResults(`
-          <h3>Scan Results</h3>
-          <p>Total files found: <strong>${result.files.length}</strong></p>
-          <div class="file-list">
-            <h4>Sample Files:</h4>
-            <ul>
-              ${result.files.slice(0, 10).map(file => `<li>${file}</li>`).join('')}
-              ${result.files.length > 10 ? '<li>...</li>' : ''}
-            </ul>
-          </div>
-        `);
-        
-        showSnackbar(`Found ${result.files.length} files`);
-      } else {
-        showStatus(`Error: ${result.error}`, 'error');
-        showSnackbar(`Error: ${result.error}`, 'DISMISS');
-      }
-    } catch (error) {
-      console.error('Error during scan operation:', error);
-      showStatus(`Error: ${error.message}`, 'error');
-      showSnackbar(`Error: ${error.message}`, 'DISMISS');
-    }
-  }
-
-  // Handle Analyze operation
-  async function handleAnalyze() {
-    try {
-      // Show loading state
-      showStatus('Analyzing collection...', 'indeterminate');
-      
-      const response = await fetch(`/api/metadata?path=${encodeURIComponent(sourcePathInput.value)}`);
-      const result = await response.json();
-      
-      if (result.success) {
-        const musicFiles = result.musicFiles;
-        
-        // Count unique values
-        const artists = new Set(musicFiles.map(f => f.metadata.artist || 'Unknown'));
-        const albums = new Set(musicFiles.map(f => f.metadata.album || 'Unknown'));
-        const genres = new Set(musicFiles.map(f => f.metadata.genre || 'Unknown'));
-        const years = new Set(musicFiles.map(f => f.metadata.year ? f.metadata.year.toString() : 'Unknown'));
-        
-        showStatus('Analysis complete!', 'success');
-        
-        // Show results
-        showResults(`
-          <h3>Analysis Results</h3>
-          <div class="stats-grid">
-            <div class="stat-card">
-              <span class="material-icons">music_note</span>
-              <div class="stat-value">${musicFiles.length}</div>
-              <div class="stat-label">Music Files</div>
-            </div>
-            <div class="stat-card">
-              <span class="material-icons">person</span>
-              <div class="stat-value">${artists.size}</div>
-              <div class="stat-label">Artists</div>
-            </div>
-            <div class="stat-card">
-              <span class="material-icons">album</span>
-              <div class="stat-value">${albums.size}</div>
-              <div class="stat-label">Albums</div>
-            </div>
-            <div class="stat-card">
-              <span class="material-icons">category</span>
-              <div class="stat-value">${genres.size}</div>
-              <div class="stat-label">Genres</div>
-            </div>
-            <div class="stat-card">
-              <span class="material-icons">calendar_today</span>
-              <div class="stat-value">${years.size}</div>
-              <div class="stat-label">Years</div>
-            </div>
-          </div>
-        `);
-        
-        showSnackbar('Analysis complete');
-      } else {
-        showStatus(`Error: ${result.error}`, 'error');
-        showSnackbar(`Error: ${result.error}`, 'DISMISS');
-      }
-    } catch (error) {
-      console.error('Error during analyze operation:', error);
-      showStatus(`Error: ${error.message}`, 'error');
-      showSnackbar(`Error: ${error.message}`, 'DISMISS');
-    }
-  }
-
-  // Handle Undo operation
-  async function handleUndo() {
-    if (!confirm('Are you sure you want to undo the last sort operation? This will move all files back to the source directory.')) {
-      return;
     }
     
-    try {
-      // Show loading state
-      showStatus('Undoing sort operation...', 'indeterminate');
-      
-      const response = await fetch('/api/undo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          sourcePath: sourcePathInput.value,
-          targetPath: targetPathInput.value
-        })
+    // Save settings button (if present)
+    if (saveSettingsBtn) {
+      saveSettingsBtn.addEventListener('click', saveSettings);
+    }
+    
+    // Reset settings button (if present)
+    if (resetSettingsBtn) {
+      resetSettingsBtn.addEventListener('click', resetSettings);
+    }
+    
+    // Add custom pattern forms (if present)
+    const addRenamePatternForm = document.getElementById('add-rename-pattern-form');
+    const addSortPatternForm = document.getElementById('add-sort-pattern-form');
+    
+    if (addRenamePatternForm) {
+      addRenamePatternForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const patternInput = addRenamePatternForm.querySelector('input[name="pattern"]');
+        if (patternInput && patternInput.value.trim()) {
+          addCustomPattern('rename', patternInput.value.trim());
+          patternInput.value = '';
+        }
       });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        showStatus('Undo operation complete!', 'success');
-        showSnackbar('Undo operation complete');
-      } else {
-        showStatus(`Error: ${result.error}`, 'error');
-        showSnackbar(`Error: ${result.error}`, 'DISMISS');
+    }
+    
+    if (addSortPatternForm) {
+      addSortPatternForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const patternInput = addSortPatternForm.querySelector('input[name="pattern"]');
+        if (patternInput && patternInput.value.trim()) {
+          addCustomPattern('sort', patternInput.value.trim());
+          patternInput.value = '';
+        }
+      });
+    }
+    
+    // Input fields - save settings when changed and focus is lost
+    sourcePathInput.addEventListener('blur', () => {
+      if (currentSettings && sourcePathInput.value !== currentSettings.sourcePath) {
+        saveSettings();
       }
-    } catch (error) {
-      console.error('Error during undo operation:', error);
-      showStatus(`Error: ${error.message}`, 'error');
-      showSnackbar(`Error: ${error.message}`, 'DISMISS');
-    }
-  }
-
-  // Show status card with message
-  function showStatus(message, type = 'progress') {
-    statusCard.style.display = 'block';
-    statusMessage.textContent = message;
+    });
     
-    // Reset progress bar classes
-    progressBar.className = 'progress-bar';
+    targetPathInput.addEventListener('blur', () => {
+      if (currentSettings && targetPathInput.value !== currentSettings.targetPath) {
+        saveSettings();
+      }
+    });
     
-    switch (type) {
-      case 'indeterminate':
-        progressBar.classList.add('indeterminate');
-        progressBar.style.width = '100%';
-        break;
-      case 'success':
-        progressBar.style.width = '100%';
-        progressBar.style.backgroundColor = 'var(--success-color)';
-        // Hide after 3 seconds
-        setTimeout(() => {
-          statusCard.style.display = 'none';
-        }, 3000);
-        break;
-      case 'error':
-        progressBar.style.width = '100%';
-        progressBar.style.backgroundColor = 'var(--error-color)';
-        break;
-      default:
-        progressBar.style.width = '0%';
-        setTimeout(() => {
-          progressBar.style.width = '100%';
-        }, 50);
+    if (copyModeCheckbox) {
+      copyModeCheckbox.addEventListener('change', () => {
+        if (currentSettings && copyModeCheckbox.checked !== currentSettings.copyByDefault) {
+          saveSettings();
+        }
+      });
     }
-  }
-
-  // Initialize the app
-  addDynamicStyles();
-  init();
-});
+    
+    if (sortPatternSelect) {
+      sortPatternSelect.addEventListener('change', () => {
+        if (currentSettings && sortPatternSelect.value !== currentSettings.defaultSortPattern) {
+          saveSettings();
+        }
+      });
+    }

@@ -26,13 +26,20 @@ export async function startServer(port: number = 3000): Promise<void> {
   await settingsManager.initialize();
   
   // Get configuration
-  app.get('/api/config', function(req, res) {
+  app.get('/api/config', async function(req, res) {
     try {
       logger.info('Config requested');
+      // Get current settings
+      const settings = await settingsManager.getAll();
+      
       res.json({
-        paths: PATHS,
+        paths: {
+          SOURCE: settings.sourcePath,
+          TARGET: settings.targetPath
+        },
         supportedExtensions: SUPPORTED_EXTENSIONS,
-        sortPatterns: ['artist', 'album-artist', 'album', 'genre', 'year']
+        sortPatterns: ['artist', 'album-artist', 'album', 'genre', 'year'],
+        settings: settings
       });
     } catch (error) {
       logger.error('Error serving config:', error as Error);
@@ -83,121 +90,136 @@ export async function startServer(port: number = 3000): Promise<void> {
   });
   
   // Sort files
-  app.post('/api/sort', function(req, res) {
-    const { pattern, sourcePath, targetPath, copy } = req.body;
-    
-    logger.info(`Sorting request received: pattern=${pattern}, source=${sourcePath}, target=${targetPath}, copy=${copy}`);
-    
-    const fileOps = new FileOperations();
-    const metadataService = new MetadataService();
-    const musicSorter = new MusicSorter(fileOps);
-    
-    // Validate inputs
-    if (!pattern) {
-      return res.status(400).json({ success: false, error: 'Sort pattern is required' });
+  app.post('/api/sort', async function(req, res) {
+    try {
+      const { pattern, sourcePath, targetPath, copy } = req.body;
+      
+      logger.info(`Sorting request received: pattern=${pattern}, source=${sourcePath}, target=${targetPath}, copy=${copy}`);
+      
+      // Get current settings
+      const settings = await settingsManager.getAll();
+      
+      const fileOps = new FileOperations();
+      const metadataService = new MetadataService();
+      const musicSorter = new MusicSorter(fileOps);
+      
+      // Validate inputs
+      if (!pattern) {
+        return res.status(400).json({ success: false, error: 'Sort pattern is required' });
+      }
+      
+      // Source path: use provided value, or fall back to settings, then PATHS constant
+      const sourceDir = sourcePath || settings.sourcePath || PATHS.SOURCE;
+      // Target path: use provided value, or fall back to settings, then PATHS constant
+      const targetDir = targetPath || settings.targetPath || PATHS.TARGET;
+      
+      // Update settings with new values if they differ from current settings
+      if (sourceDir !== settings.sourcePath) {
+        await settingsManager.set('sourcePath', sourceDir);
+      }
+      
+      if (targetDir !== settings.targetPath) {
+        await settingsManager.set('targetPath', targetDir);
+      }
+      
+      // Track the last used pattern
+      await settingsManager.set('lastUsedPattern', pattern);
+      
+      const files = await fileOps.scanDirectory(sourceDir);
+      logger.info(`Found ${files.length} files for sorting`);
+      
+      const musicFiles = await metadataService.extractMetadata(files);
+      logger.info(`Processing ${musicFiles.length} music files`);
+      
+      // Perform sorting based on pattern
+      switch (pattern) {
+        case 'artist':
+          await musicSorter.sortByArtist(musicFiles, copy);
+          break;
+        case 'album-artist':
+          await musicSorter.sortByAlbumArtist(musicFiles, copy);
+          break;
+        case 'album':
+          await musicSorter.sortByAlbum(musicFiles, copy);
+          break;
+        case 'genre':
+          await musicSorter.sortByGenre(musicFiles, copy);
+          break;
+        case 'year':
+          await musicSorter.sortByYear(musicFiles, copy);
+          break;
+        default:
+          throw new Error(`Unknown pattern: ${pattern}`);
+      }
+      
+      logger.success('Sorting operation completed successfully');
+      res.json({ success: true, message: 'Sorting complete' });
+    } catch (error) {
+      logger.error('Error during sorting operation:', error as Error);
+      res.status(500).json({ success: false, error: (error as Error).message });
     }
-    
-    fileOps.scanDirectory(sourcePath || PATHS.SOURCE)
-      .then(files => {
-        logger.info(`Found ${files.length} files for sorting`);
-        return metadataService.extractMetadata(files);
-      })
-      .then(async musicFiles => {
-        logger.info(`Processing ${musicFiles.length} music files`);
-        
-        // Perform sorting based on pattern
-        try {
-          switch (pattern) {
-            case 'artist':
-              await musicSorter.sortByArtist(musicFiles, copy);
-              break;
-            case 'album-artist':
-              await musicSorter.sortByAlbumArtist(musicFiles, copy);
-              break;
-            case 'album':
-              await musicSorter.sortByAlbum(musicFiles, copy);
-              break;
-            case 'genre':
-              await musicSorter.sortByGenre(musicFiles, copy);
-              break;
-            case 'year':
-              await musicSorter.sortByYear(musicFiles, copy);
-              break;
-            default:
-              throw new Error(`Unknown pattern: ${pattern}`);
-          }
-          
-          logger.success('Sorting operation completed successfully');
-          res.json({ success: true, message: 'Sorting complete' });
-        } catch (err) {
-          throw err;
-        }
-      })
-      .catch(error => {
-        logger.error('Error during sorting operation:', error as Error);
-        res.status(500).json({ success: false, error: (error as Error).message });
-      });
   });
   
   // Undo sorting
-  app.post('/api/undo', function(req, res) {
-    const fileOps = new FileOperations();
-    const { sourcePath = PATHS.SOURCE, targetPath = PATHS.TARGET } = req.body;
-    
-    logger.info(`Undo sorting request: source=${sourcePath}, target=${targetPath}`);
-    
-    // Scan all files in sorted directory
-    fileOps.scanDirectory(targetPath)
-      .then(async (sortedFiles) => {
-        logger.info(`Found ${sortedFiles.length} sorted files to restore`);
-        
-        // Make sure source directory exists
-        await fileOps.ensureDirectoryExists(sourcePath);
-        
-        let successCount = 0;
-        let errorCount = 0;
-        
-        // Move each file back to source
-        for (const filePath of sortedFiles) {
+  app.post('/api/undo', async function(req, res) {
+    try {
+      const fileOps = new FileOperations();
+      const settings = await settingsManager.getAll();
+      
+      const { sourcePath = settings.sourcePath, targetPath = settings.targetPath } = req.body;
+      
+      logger.info(`Undo sorting request: source=${sourcePath}, target=${targetPath}`);
+      
+      // Scan all files in sorted directory
+      const sortedFiles = await fileOps.scanDirectory(targetPath);
+      logger.info(`Found ${sortedFiles.length} sorted files to restore`);
+      
+      // Make sure source directory exists
+      await fileOps.ensureDirectoryExists(sourcePath);
+      
+      let successCount = 0;
+      let errorCount = 0;
+      
+      // Move each file back to source
+      for (const filePath of sortedFiles) {
+        try {
+          const fileName = path.basename(filePath);
+          const targetFilePath = path.join(sourcePath, fileName);
+          
+          // Check if file with same name already exists at the destination
           try {
-            const fileName = path.basename(filePath);
-            const targetFilePath = path.join(sourcePath, fileName);
+            await fs.access(targetFilePath);
+            // If we get here, file exists - create a unique name
+            const ext = path.extname(fileName);
+            const baseName = path.basename(fileName, ext);
+            const newFileName = `${baseName}_restored_${Date.now()}${ext}`;
+            const newTargetPath = path.join(sourcePath, newFileName);
             
-            // Check if file with same name already exists at the destination
-            try {
-              await fs.access(targetFilePath);
-              // If we get here, file exists - create a unique name
-              const ext = path.extname(fileName);
-              const baseName = path.basename(fileName, ext);
-              const newFileName = `${baseName}_restored_${Date.now()}${ext}`;
-              const newTargetPath = path.join(sourcePath, newFileName);
-              
-              await fs.rename(filePath, newTargetPath);
-              logger.info(`Restored with new name: ${newFileName}`);
-            } catch {
-              // File doesn't exist at destination, proceed normally
-              await fs.rename(filePath, targetFilePath);
-              logger.info(`Restored: ${fileName}`);
-            }
-            
-            successCount++;
-          } catch (error) {
-            logger.error(`Error restoring file ${filePath}:`, error as Error);
-            errorCount++;
+            await fs.rename(filePath, newTargetPath);
+            logger.info(`Restored with new name: ${newFileName}`);
+          } catch {
+            // File doesn't exist at destination, proceed normally
+            await fs.rename(filePath, targetFilePath);
+            logger.info(`Restored: ${fileName}`);
           }
+          
+          successCount++;
+        } catch (error) {
+          logger.error(`Error restoring file ${filePath}:`, error as Error);
+          errorCount++;
         }
-        
-        logger.success(`Undo operation complete. Restored: ${successCount}, Failed: ${errorCount}`);
-        res.json({ 
-          success: true, 
-          message: `Undo operation complete. Restored: ${successCount}, Failed: ${errorCount}`,
-          details: { successCount, errorCount, totalFiles: sortedFiles.length }
-        });
-      })
-      .catch(error => {
-        logger.error('Error during undo operation:', error as Error);
-        res.status(500).json({ success: false, error: (error as Error).message });
+      }
+      
+      logger.success(`Undo operation complete. Restored: ${successCount}, Failed: ${errorCount}`);
+      res.json({ 
+        success: true, 
+        message: `Undo operation complete. Restored: ${successCount}, Failed: ${errorCount}`,
+        details: { successCount, errorCount, totalFiles: sortedFiles.length }
       });
+    } catch (error) {
+      logger.error('Error during undo operation:', error as Error);
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
   });
 
   // Get settings
