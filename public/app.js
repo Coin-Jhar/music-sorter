@@ -39,6 +39,37 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Attach event listeners
     setupEventListeners();
+    
+    // Add dynamic styles
+    addDynamicStyles();
+  }
+
+  // Show status in the status card
+  function showStatus(message, type = 'normal') {
+    statusMessage.textContent = message;
+    statusCard.style.display = 'block';
+    
+    if (type === 'indeterminate') {
+      progressBar.classList.add('indeterminate');
+      progressBar.style.width = '30%';
+    } else if (type === 'error') {
+      progressBar.classList.remove('indeterminate');
+      progressBar.style.width = '100%';
+      progressBar.style.backgroundColor = 'var(--error-color)';
+    } else if (type === 'success') {
+      progressBar.classList.remove('indeterminate');
+      progressBar.style.width = '100%';
+      progressBar.style.backgroundColor = 'var(--success-color)';
+      
+      // Auto hide after success
+      setTimeout(() => {
+        statusCard.style.display = 'none';
+        progressBar.style.backgroundColor = 'var(--primary-color)';
+      }, 2000);
+    } else {
+      progressBar.classList.remove('indeterminate');
+      progressBar.style.width = '0';
+    }
   }
 
   // Show results in the results card
@@ -208,6 +239,8 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const response = await fetch('/api/config');
       const config = await response.json();
+      
+      console.log('Loaded configuration:', config);
       
       // Store current settings
       currentSettings = config.settings;
@@ -442,6 +475,424 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Handle sort button click
+  async function handleSort() {
+    try {
+      const pattern = sortPatternSelect.value;
+      const sourcePath = sourcePathInput.value;
+      const targetPath = targetPathInput.value;
+      const copy = copyModeCheckbox.checked;
+      
+      if (!pattern) {
+        showSnackbar('Please select a sort pattern', 'DISMISS');
+        return;
+      }
+      
+      if (!sourcePath || !targetPath) {
+        showSnackbar('Please provide source and target paths', 'DISMISS');
+        return;
+      }
+      
+      showStatus(`Sorting files with pattern: ${pattern}...`, 'indeterminate');
+      
+      const response = await fetch('/api/sort', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ pattern, sourcePath, targetPath, copy })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        showStatus('Sorting complete!', 'success');
+        showSnackbar('Files have been sorted successfully');
+      } else {
+        showStatus(`Error: ${result.error}`, 'error');
+        showSnackbar(`Error: ${result.error}`, 'DISMISS');
+      }
+    } catch (error) {
+      console.error('Error during sort operation:', error);
+      showStatus(`Error: ${error.message}`, 'error');
+      showSnackbar(`Error sorting files: ${error.message}`, 'DISMISS');
+    }
+  }
+
+  // Handle scan button click
+  async function handleScan() {
+    try {
+      const sourcePath = sourcePathInput.value;
+      
+      if (!sourcePath) {
+        showSnackbar('Please provide a source path', 'DISMISS');
+        return;
+      }
+      
+      showStatus('Scanning files...', 'indeterminate');
+      
+      const response = await fetch(`/api/scan?path=${encodeURIComponent(sourcePath)}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        const fileCount = result.files.length;
+        
+        let html = `
+          <h3>Scan Results</h3>
+          <p>Found ${fileCount} files in ${sourcePath}</p>
+        `;
+        
+        if (fileCount > 0) {
+          html += `
+            <div class="file-list">
+              <ul>
+                ${result.files.map(file => `<li>${file}</li>`).join('')}
+              </ul>
+            </div>
+          `;
+        }
+        
+        showResults(html);
+        showStatus('Scan complete!', 'success');
+      } else {
+        showStatus(`Error: ${result.error}`, 'error');
+        showSnackbar(`Error: ${result.error}`, 'DISMISS');
+      }
+    } catch (error) {
+      console.error('Error during scan operation:', error);
+      showStatus(`Error: ${error.message}`, 'error');
+      showSnackbar(`Error scanning files: ${error.message}`, 'DISMISS');
+    }
+  }
+
+  // Handle analyze button click
+  async function handleAnalyze() {
+    try {
+      const sourcePath = sourcePathInput.value;
+      
+      if (!sourcePath) {
+        showSnackbar('Please provide a source path', 'DISMISS');
+        return;
+      }
+      
+      showStatus('Analyzing music collection...', 'indeterminate');
+      
+      const response = await fetch(`/api/metadata?path=${encodeURIComponent(sourcePath)}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        const musicFiles = result.musicFiles;
+        
+        // Count artists, albums, genres
+        const artists = new Set();
+        const albums = new Set();
+        const genres = new Set();
+        const years = new Set();
+        
+        musicFiles.forEach(file => {
+          if (file.metadata.artist) artists.add(file.metadata.artist);
+          if (file.metadata.album) albums.add(file.metadata.album);
+          if (file.metadata.genre) genres.add(file.metadata.genre);
+          if (file.metadata.year) years.add(file.metadata.year);
+        });
+        
+        let html = `
+          <h3>Analysis Results</h3>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-label">Total Files</span>
+              <span class="stat-value">${musicFiles.length}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Artists</span>
+              <span class="stat-value">${artists.size}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Albums</span>
+              <span class="stat-value">${albums.size}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Genres</span>
+              <span class="stat-value">${genres.size}</span>
+            </div>
+            ${years.size > 0 ? `
+              <div class="stat-card">
+                <span class="stat-label">Years</span>
+                <span class="stat-value">${years.size}</span>
+              </div>
+            ` : ''}
+          </div>
+          
+          <h4>Music Files</h4>
+          <div class="file-list">
+            <ul>
+              ${musicFiles.map(file => {
+                const artist = file.metadata.artist || 'Unknown';
+                const title = file.metadata.title || file.filename;
+                return `<li>${artist} - ${title}</li>`;
+              }).join('')}
+            </ul>
+          </div>
+        `;
+        
+        showResults(html);
+        showStatus('Analysis complete!', 'success');
+      } else {
+        showStatus(`Error: ${result.error}`, 'error');
+        showSnackbar(`Error: ${result.error}`, 'DISMISS');
+      }
+    } catch (error) {
+      console.error('Error during analyze operation:', error);
+      showStatus(`Error: ${error.message}`, 'error');
+      showSnackbar(`Error analyzing files: ${error.message}`, 'DISMISS');
+    }
+  }
+
+  // Handle undo button click
+  async function handleUndo() {
+    if (!confirm('Are you sure you want to undo the last sort operation? This will move files back to the source directory.')) {
+      return;
+    }
+    
+    try {
+      const sourcePath = sourcePathInput.value;
+      const targetPath = targetPathInput.value;
+      
+      if (!sourcePath || !targetPath) {
+        showSnackbar('Please provide source and target paths', 'DISMISS');
+        return;
+      }
+      
+      showStatus('Undoing sort operation...', 'indeterminate');
+      
+      const response = await fetch('/api/undo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ sourcePath, targetPath })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        showStatus('Undo operation complete!', 'success');
+        showSnackbar(`Files have been restored. ${result.details.successCount} files moved, ${result.details.errorCount} errors.`);
+      } else {
+        showStatus(`Error: ${result.error}`, 'error');
+        showSnackbar(`Error: ${result.error}`, 'DISMISS');
+      }
+    } catch (error) {
+      console.error('Error during undo operation:', error);
+      showStatus(`Error: ${error.message}`, 'error');
+      showSnackbar(`Error undoing sort: ${error.message}`, 'DISMISS');
+    }
+  }
+
+  // Show settings modal
+  function showSettings() {
+    // If a settings modal already exists in the DOM, show it and return
+    const existingModal = document.getElementById('settings-modal');
+    if (existingModal) {
+      existingModal.style.display = 'block';
+      return;
+    }
+    
+    // Create settings modal
+    const modal = document.createElement('div');
+    modal.id = 'settings-modal';
+    modal.className = 'modal';
+    
+    // Settings content
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content card';
+    
+    // Header
+    const header = document.createElement('div');
+    header.className = 'card-title';
+    header.innerHTML = `
+      <h2>Settings</h2>
+      <button id="close-settings" class="icon-button">
+        <span class="material-icons">close</span>
+      </button>
+    `;
+    
+    // Content
+    const content = document.createElement('div');
+    content.className = 'card-content';
+    
+    // Paths section
+    const pathsSection = document.createElement('div');
+    pathsSection.className = 'settings-section';
+    pathsSection.innerHTML = `
+      <h3>File Paths</h3>
+      <div class="form-field">
+        <label for="settings-source-path">Source Directory</label>
+        <div class="input-container">
+          <input type="text" id="settings-source-path" class="text-input" value="${sourcePathInput.value}">
+        </div>
+      </div>
+      <div class="form-field">
+        <label for="settings-target-path">Target Directory</label>
+        <div class="input-container">
+          <input type="text" id="settings-target-path" class="text-input" value="${targetPathInput.value}">
+        </div>
+      </div>
+    `;
+    
+    // Behavior section
+    const behaviorSection = document.createElement('div');
+    behaviorSection.className = 'settings-section';
+    behaviorSection.innerHTML = `
+      <h3>Behavior</h3>
+      <div class="form-field">
+        <label for="settings-default-pattern">Default Sort Pattern</label>
+        <div class="select-container">
+          <select id="settings-default-pattern" class="select-input">
+            <option value="artist">Artist</option>
+            <option value="album-artist">Album Artist</option>
+            <option value="album">Album</option>
+            <option value="genre">Genre</option>
+            <option value="year">Year</option>
+          </select>
+          <span class="material-icons">arrow_drop_down</span>
+        </div>
+      </div>
+      <div class="form-field">
+        <label for="settings-default-rename">Default Rename Pattern</label>
+        <div class="input-container">
+          <input type="text" id="settings-default-rename" class="text-input" 
+            placeholder="{artist} - {title}"
+            value="${currentSettings?.defaultRenamePattern || '{artist} - {title}'}">
+        </div>
+        <small>Available tags: {artist}, {albumArtist}, {album}, {title}, {genre}, {year}, {track}</small>
+      </div>
+      <div class="form-field">
+        <label class="checkbox-container">
+          <input type="checkbox" id="settings-copy-mode" ${copyModeCheckbox?.checked ? 'checked' : ''}>
+          <span class="checkbox-label">Copy files by default (instead of move)</span>
+        </label>
+      </div>
+    `;
+    
+    // Rename patterns section
+    const renameSection = document.createElement('div');
+    renameSection.className = 'settings-section';
+    renameSection.innerHTML = `
+      <h3>Rename Patterns</h3>
+      <div id="rename-patterns">
+        <p>Loading patterns...</p>
+      </div>
+      <form id="add-rename-pattern-form" class="form-field">
+        <div class="input-container">
+          <input type="text" name="pattern" class="text-input" placeholder="New rename pattern">
+          <button type="submit" class="text-button">Add</button>
+        </div>
+      </form>
+    `;
+    
+    // Buttons
+    const buttonsSection = document.createElement('div');
+    buttonsSection.className = 'button-container';
+    buttonsSection.innerHTML = `
+      <button id="settings-reset-btn" class="text-button warning">Reset to Defaults</button>
+      <button id="settings-save-btn" class="primary-button">Save Settings</button>
+    `;
+    
+    // Assemble modal
+    content.appendChild(pathsSection);
+    content.appendChild(behaviorSection);
+    content.appendChild(renameSection);
+    content.appendChild(buttonsSection);
+    
+    modalContent.appendChild(header);
+    modalContent.appendChild(content);
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Show modal
+    modal.style.display = 'block';
+    
+    // Set current values
+    if (currentSettings) {
+      const defaultPatternSelect = document.getElementById('settings-default-pattern');
+      defaultPatternSelect.value = currentSettings.defaultSortPattern || 'artist';
+      
+      // Populate rename patterns
+      if (currentSettings.customPatterns) {
+        displayCustomPatterns(currentSettings.customPatterns);
+      }
+    }
+    
+    // Close button event
+    document.getElementById('close-settings').addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+    
+    // Click outside to close
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+    
+    // Save button
+    document.getElementById('settings-save-btn').addEventListener('click', () => {
+      const updatedSettings = {
+        sourcePath: document.getElementById('settings-source-path').value,
+        targetPath: document.getElementById('settings-target-path').value,
+        defaultSortPattern: document.getElementById('settings-default-pattern').value,
+        defaultRenamePattern: document.getElementById('settings-default-rename').value,
+        copyByDefault: document.getElementById('settings-copy-mode').checked
+      };
+      
+      // Update current settings
+      currentSettings = { ...currentSettings, ...updatedSettings };
+      
+      // Update UI
+      sourcePathInput.value = updatedSettings.sourcePath;
+      targetPathInput.value = updatedSettings.targetPath;
+      if (copyModeCheckbox) copyModeCheckbox.checked = updatedSettings.copyByDefault;
+      if (sortPatternSelect) sortPatternSelect.value = updatedSettings.defaultSortPattern;
+      
+      // Save to server
+      fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedSettings)
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          showSnackbar('Settings saved successfully');
+          modal.style.display = 'none';
+        } else {
+          showSnackbar(`Error: ${result.error}`, 'DISMISS');
+        }
+      })
+      .catch(error => {
+        console.error('Error saving settings:', error);
+        showSnackbar(`Error saving settings: ${error.message}`, 'DISMISS');
+      });
+    });
+    
+    // Reset button
+    document.getElementById('settings-reset-btn').addEventListener('click', resetSettings);
+    
+    // Add pattern form
+    document.getElementById('add-rename-pattern-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const patternInput = e.target.elements.pattern;
+      if (patternInput && patternInput.value.trim()) {
+        addCustomPattern('rename', patternInput.value.trim());
+        patternInput.value = '';
+      }
+    });
+  }
+
   // Setup all event listeners
   function setupEventListeners() {
     // Sort button click
@@ -472,10 +923,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Settings button (if present)
     if (settingsBtn) {
-      settingsBtn.addEventListener('click', () => {
-        // Display settings in a modal or dedicated view
-        showSettings();
-      });
+      settingsBtn.addEventListener('click', showSettings);
     }
     
     // Save settings button (if present)
@@ -486,32 +934,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset settings button (if present)
     if (resetSettingsBtn) {
       resetSettingsBtn.addEventListener('click', resetSettings);
-    }
-    
-    // Add custom pattern forms (if present)
-    const addRenamePatternForm = document.getElementById('add-rename-pattern-form');
-    const addSortPatternForm = document.getElementById('add-sort-pattern-form');
-    
-    if (addRenamePatternForm) {
-      addRenamePatternForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const patternInput = addRenamePatternForm.querySelector('input[name="pattern"]');
-        if (patternInput && patternInput.value.trim()) {
-          addCustomPattern('rename', patternInput.value.trim());
-          patternInput.value = '';
-        }
-      });
-    }
-    
-    if (addSortPatternForm) {
-      addSortPatternForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const patternInput = addSortPatternForm.querySelector('input[name="pattern"]');
-        if (patternInput && patternInput.value.trim()) {
-          addCustomPattern('sort', patternInput.value.trim());
-          patternInput.value = '';
-        }
-      });
     }
     
     // Input fields - save settings when changed and focus is lost
@@ -542,3 +964,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
+  }
+
+  // Initialize the app when DOM is ready
+  init();
+});
