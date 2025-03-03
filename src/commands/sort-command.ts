@@ -11,10 +11,10 @@ export function sortCommand(program: Command): void {
   program
     .command('sort')
     .description('Sort music files')
-    .option('-s, --source <path>', 'Source directory')
-    .option('-d, --destination <path>', 'Destination directory')
-    .option('-p, --pattern <pattern>', 'Sorting pattern (artist, album-artist, album, genre, year)')
-    .option('-c, --copy', 'Copy files instead of moving them')
+    .option('-s, --source <path>', 'Source directory', PATHS.SOURCE)
+    .option('-d, --destination <path>', 'Destination directory', PATHS.TARGET)
+    .option('-p, --pattern <pattern>', 'Sorting pattern (artist, album-artist, album, genre, year)', 'artist')
+    .option('-c, --copy', 'Copy files instead of moving them', false)
     .action(async (options) => {
       try {
         // Load settings first
@@ -22,8 +22,8 @@ export function sortCommand(program: Command): void {
         
         // Use settings as defaults if options are not provided
         const settings = await settingsManager.getAll();
-        const sourcePath = options.source || settings.sourcePath;
-        const destPath = options.destination || settings.targetPath;
+        const sourcePath = options.source === PATHS.SOURCE ? settings.sourcePath : options.source;
+        const destPath = options.destination === PATHS.TARGET ? settings.targetPath : options.destination;
         const pattern = options.pattern || settings.defaultSortPattern;
         const copyMode = options.copy !== undefined ? options.copy : settings.copyByDefault;
         

@@ -33,18 +33,36 @@ export class MusicSorter extends BaseService {
     this.log(`Sorting ${musicFiles.length} files by album artist...`);
     
     for (const file of musicFiles) {
-      const albumArtist = file.metadata.albumArtist || file.metadata.artist || 'Unknown Artist';
+      // Debug the actual metadata being used for decisions
+      console.log(`SORTING "${file.filename}":`);
+      console.log(`- Raw albumArtist from metadata: ${file.metadata.albumArtist === undefined ? 'undefined' : (file.metadata.albumArtist === null ? 'null' : `"${file.metadata.albumArtist}"`)}`);
+      console.log(`- Raw artist from metadata: ${file.metadata.artist === undefined ? 'undefined' : (file.metadata.artist === null ? 'null' : `"${file.metadata.artist}"`)}`);
+      
+      // STRICT APPROACH: Use albumArtist field, explicitly falling back to Unknown if not present
+      // Don't use artist as fallback
+      let folderName: string;
+      if (file.metadata.albumArtist === undefined || file.metadata.albumArtist === null || file.metadata.albumArtist === '') {
+        folderName = 'Unknown Album Artist';
+        console.log(`- Using folder: "${folderName}" (no album artist found)`);
+      } else {
+        folderName = file.metadata.albumArtist;
+        console.log(`- Using folder: "${folderName}" (from album artist)`);
+      }
+      
       const album = file.metadata.album || 'Unknown Album';
+      
       // Sanitize folder names
-      const sanitizedAlbumArtist = albumArtist.replace(/[\/\\:*?"<>|]/g, '_');
+      const sanitizedFolderName = folderName.replace(/[\/\\:*?"<>|]/g, '_');
       const sanitizedAlbum = album.replace(/[\/\\:*?"<>|]/g, '_');
       
       const relativePath = path.join(
         SORT_PATTERNS.ALBUM_ARTIST_FOLDER, 
-        sanitizedAlbumArtist, 
+        sanitizedFolderName, 
         sanitizedAlbum, 
         path.basename(file.path)
       );
+      
+      console.log(`- Final path: ${relativePath}`);
       
       if (copyMode) {
         await this.fileOps.copyFile(file.path, relativePath);

@@ -27,6 +27,12 @@ export class MetadataService extends BaseService {
         
         const metadata = await this.parseMetadata(filePath);
         
+        // Debug log
+        console.log(`DEBUG METADATA for ${path.basename(filePath)}:`);
+        console.log(`- Artist: ${metadata.artist}`);
+        console.log(`- Album Artist: ${metadata.albumArtist || 'NOT SET'}`);
+        console.log(`- Album: ${metadata.album}`);
+        
         musicFiles.push({
           path: filePath,
           filename: path.basename(filePath),
@@ -45,15 +51,22 @@ export class MetadataService extends BaseService {
   private async parseMetadata(filePath: string): Promise<MusicMetadata> {
     try {
       const metadata = await mm.parseFile(filePath);
-    
+      
+      // Raw debug log - see what music-metadata is actually returning
+      console.log(`RAW METADATA for ${path.basename(filePath)}:`);
+      console.log(`- Raw artist: ${metadata.common.artist}`);
+      console.log(`- Raw albumartist: ${metadata.common.albumartist || 'NOT PRESENT'}`);
+      console.log(`- Raw album: ${metadata.common.album}`);
+      
       return {
         title: metadata.common.title,
         artist: metadata.common.artist,
-        albumArtist: metadata.common.albumartist || metadata.common.artist,
+        // Explicitly don't fall back to artist
+        albumArtist: metadata.common.albumartist,
         album: metadata.common.album,
         year: metadata.common.year,
         genre: metadata.common.genre?.[0],
-        trackNumber: metadata.common.track.no ?? undefined // Convert null to undefined
+        trackNumber: metadata.common.track.no ?? undefined
       };
     } catch (error) {
       this.error(`Error extracting metadata from ${filePath}:`, error as Error);
