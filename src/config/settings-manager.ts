@@ -4,6 +4,12 @@ import path from 'path';
 import os from 'os';
 import { PATHS, SUPPORTED_EXTENSIONS, SORT_PATTERNS } from './constants';
 import { logger } from '../utils/logger';
+import { AppError, ErrorCategory, createAppError } from '../utils/error-handler';
+
+export interface CustomPatterns {
+  rename: string[];
+  sort: string[];
+}
 
 export interface UserSettings {
   sourcePath: string;
@@ -13,16 +19,21 @@ export interface UserSettings {
   copyByDefault: boolean;
   includeSubfolders: boolean;
   lastUsedPattern?: string;
-  customPatterns?: {
-    rename: string[];
-    sort: string[];
-  };
+  customPatterns: CustomPatterns;
+  lastModified: number;
+  ignorePatterns?: string[];
+  maxConcurrentOperations?: number;
+  darkMode?: boolean;
 }
 
-class SettingsManager {
+type SettingsKey = keyof UserSettings;
+
+export class SettingsManager {
   private settings: UserSettings;
   private settingsPath: string;
   private initialized: boolean = false;
+  private saveDebounceTimeout: NodeJS.Timeout | null = null;
+  private saveDebounceTime: number = 500; // ms
   
   constructor() {
     // Store settings in user's home directory
@@ -38,6 +49,7 @@ class SettingsManager {
       defaultRenamePattern: '{artist} - {title}',
       copyByDefault: false,
       includeSubfolders: true,
+      lastModified: Date.now(),
       customPatterns: {
         rename: [
           '{artist} - {title}',
@@ -45,7 +57,13 @@ class SettingsManager {
           '{artist} - {album} - {track} - {title}'
         ],
         sort: []
-      }
+      },
+      ignorePatterns: [
+        '\\.DS_Store$',
+        'Thumbs\\.db$',
+        'desktop\\.ini$'
+      ],
+      maxConcurrentOperations: 50
     };
   }
   
@@ -77,22 +95,74 @@ class SettingsManager {
   }
   
   /**
+   * Validate settings structure and fill in missing values
+   */
+  private validateSettings(loadedSettings: Partial<UserSettings>): UserSettings {
+    const defaultSettings = this.getDefaultSettings();
+    const result: UserSettings = { ...defaultSettings };
+    
+    // Update each field if it's present and of the right type
+    for (const [key, value] of Object.entries(loadedSettings)) {
+      const typedKey = key as keyof UserSettings;
+      const defaultValue = defaultSettings[typedKey];
+      
+      // Type validation
+      if (typeof value === typeof defaultValue) {
+        // @ts-ignore - we validated the type above
+        result[typedKey] = value;
+      }
+    }
+    
+    // Ensure custom patterns structure
+    if (!result.customPatterns) {
+      result.customPatterns = defaultSettings.customPatterns;
+    } else {
+      if (!Array.isArray(result.customPatterns.rename)) {
+        result.customPatterns.rename = defaultSettings.customPatterns.rename;
+      }
+      if (!Array.isArray(result.customPatterns.sort)) {
+        result.customPatterns.sort = defaultSettings.customPatterns.sort;
+      }
+    }
+    
+    // Update lastModified timestamp
+    result.lastModified = Date.now();
+    
+    return result;
+  }
+  
+  /**
    * Load settings from file
    */
   async loadSettings(): Promise<void> {
     try {
       const data = await fs.readFile(this.settingsPath, 'utf-8');
-      const loadedSettings = JSON.parse(data);
+      let loadedSettings: Partial<UserSettings>;
       
-      // Merge with default settings to ensure all fields exist
-      this.settings = { 
-        ...this.getDefaultSettings(),
-        ...loadedSettings
-      };
+      try {
+        loadedSettings = JSON.parse(data);
+      } catch (parseError) {
+        throw createAppError(
+          ErrorCategory.SETTINGS,
+          'Invalid settings file format',
+          parseError as Error,
+          { path: this.settingsPath }
+        );
+      }
+      
+      // Validate and merge with defaults
+      this.settings = this.validateSettings(loadedSettings);
       
       logger.info(`Settings loaded from ${this.settingsPath}`);
     } catch (error) {
-      logger.warn(`Could not load settings from ${this.settingsPath}`);
+      if (!(error instanceof AppError)) {
+        throw createAppError(
+          ErrorCategory.SETTINGS,
+          `Could not load settings from ${this.settingsPath}`,
+          error as Error,
+          { path: this.settingsPath }
+        );
+      }
       throw error;
     }
   }
@@ -102,21 +172,46 @@ class SettingsManager {
    */
   async saveSettings(): Promise<void> {
     try {
+      // Update lastModified timestamp
+      this.settings.lastModified = Date.now();
+      
       await fs.writeFile(
         this.settingsPath, 
         JSON.stringify(this.settings, null, 2)
       );
       logger.info(`Settings saved to ${this.settingsPath}`);
     } catch (error) {
-      logger.error('Failed to save settings:', error as Error);
-      throw error;
+      throw createAppError(
+        ErrorCategory.SETTINGS,
+        'Failed to save settings',
+        error as Error,
+        { path: this.settingsPath }
+      );
     }
+  }
+  
+  /**
+   * Save settings with debouncing to prevent excessive writes
+   */
+  private debouncedSave(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (this.saveDebounceTimeout) {
+        clearTimeout(this.saveDebounceTimeout);
+      }
+      
+      this.saveDebounceTimeout = setTimeout(() => {
+        this.saveSettings()
+          .then(resolve)
+          .catch(reject);
+        this.saveDebounceTimeout = null;
+      }, this.saveDebounceTime);
+    });
   }
   
   /**
    * Get a specific setting value
    */
-  async get<K extends keyof UserSettings>(key: K): Promise<UserSettings[K]> {
+  async get<K extends SettingsKey>(key: K): Promise<UserSettings[K]> {
     await this.ensureInitialized();
     return this.settings[key];
   }
@@ -132,10 +227,10 @@ class SettingsManager {
   /**
    * Set a specific setting value
    */
-  async set<K extends keyof UserSettings>(key: K, value: UserSettings[K]): Promise<void> {
+  async set<K extends SettingsKey>(key: K, value: UserSettings[K]): Promise<void> {
     await this.ensureInitialized();
     this.settings[key] = value;
-    await this.saveSettings();
+    await this.debouncedSave();
   }
   
   /**
@@ -144,7 +239,7 @@ class SettingsManager {
   async updateSettings(settingsUpdate: Partial<UserSettings>): Promise<void> {
     await this.ensureInitialized();
     this.settings = { ...this.settings, ...settingsUpdate };
-    await this.saveSettings();
+    await this.debouncedSave();
   }
   
   /**
@@ -160,7 +255,7 @@ class SettingsManager {
     // Don't add duplicates
     if (!this.settings.customPatterns[type].includes(pattern)) {
       this.settings.customPatterns[type].push(pattern);
-      await this.saveSettings();
+      await this.debouncedSave();
     }
   }
   
@@ -174,9 +269,19 @@ class SettingsManager {
       const index = this.settings.customPatterns[type].indexOf(pattern);
       if (index !== -1) {
         this.settings.customPatterns[type].splice(index, 1);
-        await this.saveSettings();
+        await this.debouncedSave();
       }
     }
+  }
+  
+  /**
+   * Get compiled RegExp patterns from ignorePatterns setting
+   */
+  async getIgnorePatternRegexps(): Promise<RegExp[]> {
+    await this.ensureInitialized();
+    
+    const patterns = this.settings.ignorePatterns || [];
+    return patterns.map(pattern => new RegExp(pattern));
   }
   
   /**

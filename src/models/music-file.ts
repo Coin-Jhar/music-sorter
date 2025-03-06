@@ -7,6 +7,25 @@ export interface MusicMetadata {
   year?: number;
   genre?: string;
   trackNumber?: number;
+  discNumber?: number;
+  duration?: number;
+  bitrate?: number;
+  sampleRate?: number;
+  channels?: number;
+  hasCoverArt?: boolean;
+  composer?: string;
+  lyrics?: string;
+  comment?: string;
+  isrc?: string; // International Standard Recording Code
+  bpm?: number; // Beats per minute
+  key?: string; // Musical key
+  encodingTool?: string;
+  encodingDate?: string;
+  releaseCountry?: string;
+  language?: string;
+  compilation?: boolean; // Is part of a compilation
+  rating?: number; // User rating
+  replayGain?: number; // Replay gain adjustment
 }
 
 export interface MusicFile {
@@ -15,4 +34,41 @@ export interface MusicFile {
   extension: string;
   size: number;
   metadata: MusicMetadata;
+  lastModified?: Date;
+  created?: Date;
+  hash?: string; // For detecting duplicates
+  sortKey?: string; // Computed field for sorting
+}
+
+export interface MusicCollection {
+  files: MusicFile[];
+  stats: {
+    totalSize: number;
+    totalCount: number;
+    artistCount: number;
+    albumCount: number;
+    genreCount: number;
+    formatCounts: Record<string, number>;
+    yearRange?: {
+      min: number;
+      max: number;
+    };
+  };
+}
+
+export enum SortPattern {
+  ARTIST = 'artist',
+  ALBUM_ARTIST = 'album-artist',
+  ALBUM = 'album',
+  GENRE = 'genre',
+  YEAR = 'year',
+  CUSTOM = 'custom'
+}
+
+export interface SortOptions {
+  pattern: SortPattern | string;
+  copyMode: boolean;
+  nestedStructure: boolean;
+  includeArtistInAlbumFolder: boolean;
+  template?: string;
 }
