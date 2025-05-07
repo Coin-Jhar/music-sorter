@@ -6,7 +6,7 @@ import { MetadataService } from '../services/metadata-service';
 import { MusicSorter } from '../core/sorter';
 import { settingsManager } from '../config/settings-manager';
 import { logger, LogLevel } from '../utils/logger';
-import { SortPattern, SortOptions } from '../models/music-file';
+import { SortPattern, SortOptions, SortProgressInfo } from '../models/music-file';
 import { generateTestData } from './generate-test-data';
 import { AppError, ErrorCategory } from '../utils/error-handler';
 
@@ -104,7 +104,8 @@ async function runIntegrationTest() {
     ];
     
     // Add progress tracking
-    const progressCallback = (progress) => {
+    // Fix for TypeScript error - explicitly typing the parameter
+    const progressCallback = (progress: SortProgressInfo): void => {
       logger.debug(`Sort progress: ${progress.processed}/${progress.total} files`);
     };
     

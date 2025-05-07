@@ -4,7 +4,7 @@
   "description": "Music file organizer and sorter",
   "main": "dist/index.js",
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "rd /s /q dist || del /s /q dist || exit 0",
     "build": "tsc",
     "rebuild": "npm run clean && npm run build",
     "start": "node dist/index.js",
