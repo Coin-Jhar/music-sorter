@@ -1,0 +1,19 @@
+[34m[2025-03-06 15:32:20] [INFO] === Starting Music Sorter Integration Test ===[0m
+[34m[2025-03-06 15:32:20] [INFO] Generating test data...[0m
+[34m[2025-03-06 15:32:20] [INFO] Created test file: artist1_album1_track1.mp3[0m
+[34m[2025-03-06 15:32:20] [INFO] Created test file: artist1_album1_track2.mp3[0m
+[34m[2025-03-06 15:32:20] [INFO] Created test file: artist2_album1_track1.mp3[0m
+[34m[2025-03-06 15:32:20] [INFO] Created test file: artist1_album2_track1.mp3[0m
+[34m[2025-03-06 15:32:20] [INFO] Created test file: unknown_track.mp3[0m
+[32m[2025-03-06 15:32:20] [SUCCESS] Test data generated successfully in /data/data/com.termux/files/home/projects/music-sorter/test-data[0m
+[34m[2025-03-06 15:32:20] [INFO] Generated 5 test files.[0m
+[34m[2025-03-06 15:32:20] [INFO] Test data generated successfully.[0m
+[34m[2025-03-06 15:32:20] [INFO] Settings loaded from /data/data/com.termux/files/home/.music-sorter.json[0m
+[34m[2025-03-06 15:32:20] [INFO] Settings loaded successfully[0m
+[34m[2025-03-06 15:32:21] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json[0m
+[34m[2025-03-06 15:32:21] [INFO] Settings configured: {"sourcePath":"/data/data/com.termux/files/home/projects/music-sorter/test-data/source","targetPath":"/data/data/com.termux/files/home/projects/music-sorter/test-data/target","defaultSortPattern":"artist","defaultRenamePattern":"{artist} - {title}","copyByDefault":false,"includeSubfolders":true,"lastModified":1741267941279,"customPatterns":{"rename":["{artist} - {title}","{track} - {artist} - {title}","{artist} - {album} - {track} - {title}"],"sort":[]},"ignorePatterns":["\\.DS_Store$","Thumbs\\.db$","desktop\\.ini$"],"maxConcurrentOperations":50}[0m
+[34m[2025-03-06 15:32:21] [INFO] Scanning source directory...[0m
+[34m[2025-03-06 15:32:21] [INFO] Found 5 files in source directory.[0m
+[34m[2025-03-06 15:32:21] [INFO] Extracting metadata...[0m
+[34m[2025-03-06 15:32:21] [INFO] Extracted metadata for 5 files.[0m
+[31m[2025-03-06 15:32:21] [ERROR] Integration test failed: musicSorter.setProgressCallback is not a function[0m

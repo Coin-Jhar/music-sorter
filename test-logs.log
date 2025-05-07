@@ -1,0 +1,148 @@
+
+----- Log started at 2025-03-06 14:22:19 -----
+[2025-03-06 14:22:19] [INFO] Starting Music Sorter test suite...
+[2025-03-06 14:22:19] [INFO] Setting up test environment...
+[2025-03-06 14:22:19] [SUCCESS] Test environment set up successfully.
+[2025-03-06 14:22:19] [INFO] Testing FileOperations...
+[2025-03-06 14:22:19] [INFO] Found 5 files in source directory.
+[2025-03-06 14:22:19] [ERROR] FileOperations tests failed: this.fileOps.fileExists is not a function
+[2025-03-06 14:22:19] [INFO] Testing MetadataService...
+[2025-03-06 14:22:19] [INFO] Extracted metadata for 5 files.
+[2025-03-06 14:22:19] [SUCCESS] MetadataService tests passed!
+[2025-03-06 14:22:19] [INFO] Testing MusicSorter...
+[2025-03-06 14:22:19] [ERROR] MusicSorter tests failed: Cannot read properties of undefined (reading 'ARTIST')
+[2025-03-06 14:22:19] [INFO] Testing SettingsManager...
+[2025-03-06 14:22:19] [INFO] Settings loaded from /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:22:19] [INFO] Settings loaded successfully
+[2025-03-06 14:22:19] [INFO] Default settings: {"sourcePath":"/data/data/com.termux/files/home/storage/music/Telegram","targetPath":"/data/data/com.termux/files/home/storage/music/Telegram/sorted-music","defaultSortPattern":"album-artist","defaultRenamePattern":"{artist} - {title}","copyByDefault":false,"includeSubfolders":true,"lastModified":1741263739049,"customPatterns":{"rename":["{artist} - {title}","{track} - {artist} - {title}","{artist} - {album} - {track} - {title}"],"sort":[]},"ignorePatterns":["\\.DS_Store$","Thumbs\\.db$","desktop\\.ini$"],"maxConcurrentOperations":50}
+[2025-03-06 14:22:19] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:22:20] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:22:20] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:22:20] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:22:20] [INFO] Settings reset to defaults
+[2025-03-06 14:22:20] [SUCCESS] SettingsManager tests passed!
+[2025-03-06 14:22:20] [INFO] Testing error handling...
+[2025-03-06 14:22:20] [INFO] Successfully caught AppError.
+[2025-03-06 14:22:20] [SUCCESS] Error handling tests passed!
+[2025-03-06 14:22:20] [INFO] 
+===== Test Results =====
+[2025-03-06 14:22:20] [INFO] FileOperations: ❌ FAIL
+[2025-03-06 14:22:20] [INFO] MetadataService: ✅ PASS
+[2025-03-06 14:22:20] [INFO] MusicSorter: ❌ FAIL
+[2025-03-06 14:22:20] [INFO] SettingsManager: ✅ PASS
+[2025-03-06 14:22:20] [INFO] Error Handling: ✅ PASS
+[2025-03-06 14:22:20] [INFO] 
+Overall Result: ❌ SOME TESTS FAILED
+[2025-03-06 14:22:20] [INFO] Cleaning up test environment...
+[2025-03-06 14:22:20] [SUCCESS] Test environment cleaned up successfully.
+
+----- Log started at 2025-03-06 14:27:26 -----
+[2025-03-06 14:27:26] [INFO] Starting Music Sorter test suite...
+[2025-03-06 14:27:26] [INFO] Setting up test environment...
+[2025-03-06 14:27:26] [SUCCESS] Test environment set up successfully.
+[2025-03-06 14:27:26] [INFO] Testing FileOperations...
+[2025-03-06 14:27:26] [INFO] Found 5 files in source directory.
+[2025-03-06 14:27:26] [ERROR] FileOperations tests failed: this.fileOps.fileExists is not a function
+[2025-03-06 14:27:26] [INFO] Testing MetadataService...
+[2025-03-06 14:27:26] [INFO] Extracted metadata for 5 files.
+[2025-03-06 14:27:26] [SUCCESS] MetadataService tests passed!
+[2025-03-06 14:27:26] [INFO] Testing MusicSorter...
+[2025-03-06 14:27:26] [ERROR] MusicSorter tests failed: Cannot read properties of undefined (reading 'ARTIST')
+[2025-03-06 14:27:26] [INFO] Testing SettingsManager...
+[2025-03-06 14:27:26] [INFO] Settings loaded from /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:27:26] [INFO] Settings loaded successfully
+[2025-03-06 14:27:26] [INFO] Default settings: {"sourcePath":"/data/data/com.termux/files/home/projects/music-sorter/test-data/source","targetPath":"/data/data/com.termux/files/home/projects/music-sorter/test-data/target","defaultSortPattern":"artist","defaultRenamePattern":"{artist} - {title}","copyByDefault":false,"includeSubfolders":true,"lastModified":1741264046757,"customPatterns":{"rename":["{artist} - {title}","{track} - {artist} - {title}","{artist} - {album} - {track} - {title}"],"sort":[]},"ignorePatterns":["\\.DS_Store$","Thumbs\\.db$","desktop\\.ini$"],"maxConcurrentOperations":50}
+[2025-03-06 14:27:27] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:27:27] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:27:28] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:27:28] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:27:28] [INFO] Settings reset to defaults
+[2025-03-06 14:27:28] [SUCCESS] SettingsManager tests passed!
+[2025-03-06 14:27:28] [INFO] Testing error handling...
+[2025-03-06 14:27:28] [INFO] Successfully caught AppError.
+[2025-03-06 14:27:28] [SUCCESS] Error handling tests passed!
+[2025-03-06 14:27:28] [INFO] 
+===== Test Results =====
+[2025-03-06 14:27:28] [INFO] FileOperations: ❌ FAIL
+[2025-03-06 14:27:28] [INFO] MetadataService: ✅ PASS
+[2025-03-06 14:27:28] [INFO] MusicSorter: ❌ FAIL
+[2025-03-06 14:27:28] [INFO] SettingsManager: ✅ PASS
+[2025-03-06 14:27:28] [INFO] Error Handling: ✅ PASS
+[2025-03-06 14:27:28] [INFO] 
+Overall Result: ❌ SOME TESTS FAILED
+[2025-03-06 14:27:28] [INFO] Cleaning up test environment...
+[2025-03-06 14:27:28] [SUCCESS] Test environment cleaned up successfully.
+
+----- Log started at 2025-03-06 14:49:06 -----
+[2025-03-06 14:49:06] [INFO] Starting Music Sorter test suite...
+[2025-03-06 14:49:06] [INFO] Setting up test environment...
+[2025-03-06 14:49:06] [SUCCESS] Test environment set up successfully.
+[2025-03-06 14:49:06] [INFO] Testing FileOperations...
+[2025-03-06 14:49:06] [INFO] Found 5 files in source directory.
+[2025-03-06 14:49:06] [ERROR] FileOperations tests failed: Failed to copy file to /data/data/com.termux/files/home/projects/music-sorter/test-env/target/subdir/nested/artist1_album1_track1.mp3.
+[2025-03-06 14:49:06] [INFO] Testing MetadataService...
+[2025-03-06 14:49:06] [INFO] Extracted metadata for 5 files.
+[2025-03-06 14:49:06] [SUCCESS] MetadataService tests passed!
+[2025-03-06 14:49:06] [INFO] Testing MusicSorter...
+[2025-03-06 14:49:06] [ERROR] MusicSorter tests failed: this.musicSorter.setProgressCallback is not a function
+[2025-03-06 14:49:06] [INFO] Testing SettingsManager...
+[2025-03-06 14:49:06] [INFO] Settings loaded from /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:49:06] [INFO] Settings loaded successfully
+[2025-03-06 14:49:06] [INFO] Default settings: {"sourcePath":"/data/data/com.termux/files/home/projects/music-sorter/test-data/source","targetPath":"/data/data/com.termux/files/home/projects/music-sorter/test-data/target","defaultSortPattern":"artist","defaultRenamePattern":"{artist} - {title}","copyByDefault":false,"includeSubfolders":true,"lastModified":1741265346413,"customPatterns":{"rename":["{artist} - {title}","{track} - {artist} - {title}","{artist} - {album} - {track} - {title}"],"sort":[]},"ignorePatterns":["\\.DS_Store$","Thumbs\\.db$","desktop\\.ini$"],"maxConcurrentOperations":50}
+[2025-03-06 14:49:06] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:49:07] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:49:07] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:49:07] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 14:49:07] [INFO] Settings reset to defaults
+[2025-03-06 14:49:07] [SUCCESS] SettingsManager tests passed!
+[2025-03-06 14:49:07] [INFO] Testing error handling...
+[2025-03-06 14:49:07] [INFO] Successfully caught AppError.
+[2025-03-06 14:49:07] [SUCCESS] Error handling tests passed!
+[2025-03-06 14:49:07] [INFO] 
+===== Test Results =====
+[2025-03-06 14:49:07] [INFO] FileOperations: ❌ FAIL
+[2025-03-06 14:49:07] [INFO] MetadataService: ✅ PASS
+[2025-03-06 14:49:07] [INFO] MusicSorter: ❌ FAIL
+[2025-03-06 14:49:07] [INFO] SettingsManager: ✅ PASS
+[2025-03-06 14:49:07] [INFO] Error Handling: ✅ PASS
+[2025-03-06 14:49:07] [INFO] 
+Overall Result: ❌ SOME TESTS FAILED
+[2025-03-06 14:49:07] [INFO] Cleaning up test environment...
+[2025-03-06 14:49:07] [SUCCESS] Test environment cleaned up successfully.
+
+----- Log started at 2025-03-06 15:32:14 -----
+[2025-03-06 15:32:14] [INFO] Starting Music Sorter test suite...
+[2025-03-06 15:32:14] [INFO] Setting up test environment...
+[2025-03-06 15:32:14] [SUCCESS] Test environment set up successfully.
+[2025-03-06 15:32:14] [INFO] Testing FileOperations...
+[2025-03-06 15:32:14] [INFO] Found 5 files in source directory.
+[2025-03-06 15:32:14] [ERROR] FileOperations tests failed: Failed to copy file to /data/data/com.termux/files/home/projects/music-sorter/test-env/target/subdir/nested/artist1_album1_track1.mp3.
+[2025-03-06 15:32:14] [INFO] Testing MetadataService...
+[2025-03-06 15:32:14] [INFO] Extracted metadata for 5 files.
+[2025-03-06 15:32:14] [SUCCESS] MetadataService tests passed!
+[2025-03-06 15:32:14] [INFO] Testing MusicSorter...
+[2025-03-06 15:32:14] [ERROR] MusicSorter tests failed: this.musicSorter.setProgressCallback is not a function
+[2025-03-06 15:32:14] [INFO] Testing SettingsManager...
+[2025-03-06 15:32:14] [INFO] Settings loaded from /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 15:32:14] [INFO] Settings loaded successfully
+[2025-03-06 15:32:14] [INFO] Default settings: {"sourcePath":"/data/data/com.termux/files/home/projects/music-sorter/test-data/source","targetPath":"/data/data/com.termux/files/home/projects/music-sorter/test-data/target","defaultSortPattern":"artist","defaultRenamePattern":"{artist} - {title}","copyByDefault":false,"includeSubfolders":true,"lastModified":1741267934189,"customPatterns":{"rename":["{artist} - {title}","{track} - {artist} - {title}","{artist} - {album} - {track} - {title}"],"sort":[]},"ignorePatterns":["\\.DS_Store$","Thumbs\\.db$","desktop\\.ini$"],"maxConcurrentOperations":50}
+[2025-03-06 15:32:14] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 15:32:15] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 15:32:15] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 15:32:15] [INFO] Settings saved to /data/data/com.termux/files/home/.music-sorter.json
+[2025-03-06 15:32:15] [INFO] Settings reset to defaults
+[2025-03-06 15:32:15] [SUCCESS] SettingsManager tests passed!
+[2025-03-06 15:32:15] [INFO] Testing error handling...
+[2025-03-06 15:32:15] [INFO] Successfully caught AppError.
+[2025-03-06 15:32:15] [SUCCESS] Error handling tests passed!
+[2025-03-06 15:32:15] [INFO] 
+===== Test Results =====
+[2025-03-06 15:32:15] [INFO] FileOperations: ❌ FAIL
+[2025-03-06 15:32:15] [INFO] MetadataService: ✅ PASS
+[2025-03-06 15:32:15] [INFO] MusicSorter: ❌ FAIL
+[2025-03-06 15:32:15] [INFO] SettingsManager: ✅ PASS
+[2025-03-06 15:32:15] [INFO] Error Handling: ✅ PASS
+[2025-03-06 15:32:15] [INFO] 
+Overall Result: ❌ SOME TESTS FAILED
+[2025-03-06 15:32:15] [INFO] Cleaning up test environment...
+[2025-03-06 15:32:15] [SUCCESS] Test environment cleaned up successfully.

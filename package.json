@@ -1,0 +1,40 @@
+{
+  "name": "music-sorter",
+  "version": "1.0.0",
+  "description": "Music file organizer and sorter",
+  "main": "dist/index.js",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc",
+    "rebuild": "npm run clean && npm run build",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "server": "node dist/index.js server",
+    "dev:server": "ts-node src/index.ts server",
+    "debug:all": "node dist/index.js debug --all",
+    "debug:env": "node dist/index.js debug --show-env",
+    "debug:paths": "node dist/index.js debug --show-paths --test-paths",
+    "debug:settings": "node dist/index.js debug --show-settings",
+    "analyze": "node dist/index.js analyze"
+  },
+  "bin": {
+    "music-sorter": "./dist/index.js"
+  },
+  "keywords": ["music", "sorter", "organizer", "files", "metadata"],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.4.1",
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.13.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "music-metadata": "^11.0.0"
+  }
+}
