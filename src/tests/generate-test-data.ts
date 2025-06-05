@@ -54,7 +54,7 @@ async function generateTestData() {
 
 This directory contains test data for the Music Sorter application.
 
-## Files Structure
+## File Structure
 
 - \`source/\` - Source directory with test files
   - Empty MP3 files with metadata encoded in filenames
