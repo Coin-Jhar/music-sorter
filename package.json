@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Music file organizer and sorter",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "clean": "rd /s /q dist || del /s /q dist || exit 0",
     "build": "tsc",
@@ -15,7 +16,8 @@
     "debug:env": "node dist/index.js debug --show-env",
     "debug:paths": "node dist/index.js debug --show-paths --test-paths",
     "debug:settings": "node dist/index.js debug --show-settings",
-    "analyze": "node dist/index.js analyze"
+    "analyze": "node dist/index.js analyze",
+    "test": "sh ./run-all-tests.sh"
   },
   "bin": {
     "music-sorter": "./dist/index.js"

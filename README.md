@@ -18,7 +18,7 @@ A command-line utility for organizing and sorting music files in Termux.
 
 ```bash
 # Clone the repository
-git clone https://github.com/Coin-Jhar/music-sorter/tree/master
+git clone https://github.com/Coin-Jhar/music-sorter.git
 cd music-sorter
 
 # Install dependencies
@@ -56,6 +56,14 @@ Edit the `src/config/constants.ts` file to customize:
 - Source and target directories
 - Supported file extensions
 - Sort patterns
+
+## Testing
+
+Run all unit and integration tests with:
+
+```bash
+pnpm test
+```
 
 ## License
 

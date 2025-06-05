@@ -17,3 +17,10 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+test-logs/
+
+# Compiled JavaScript
+src/**/*.js
