@@ -9,6 +9,7 @@ import { settingsManager } from '../config/settings-manager';
 import { logger, LogLevel } from '../utils/logger';
 import { SortPattern, SortOptions } from '../models/music-file';
 import { createAppError, ErrorCategory, AppError } from '../utils/error-handler';
+import { sanitizeFilename } from '../utils/string-utils';
 
 // Configure logger for testing
 logger.setLevel(LogLevel.DEBUG);
@@ -477,6 +478,35 @@ class MusicSorterTestSuite {
   }
 
   /**
+   * Test sanitizeFilename utility
+   */
+  async testSanitizeFilename() {
+    logger.info('Testing sanitizeFilename...');
+
+    try {
+      const cases: Array<{ input: string; expected: string }> = [
+        { input: 'Invalid:/\\*?"<>|Name', expected: 'Invalid_________Name' },
+        { input: '.hiddenfile', expected: 'hiddenfile' },
+        { input: 'con', expected: '_con' },
+        { input: 'COM1', expected: '_COM1' }
+      ];
+
+      for (const { input, expected } of cases) {
+        const result = sanitizeFilename(input);
+        if (result !== expected) {
+          throw new Error(`sanitizeFilename failed for "${input}". Expected "${expected}", got "${result}".`);
+        }
+      }
+
+      logger.success('sanitizeFilename tests passed!');
+      return true;
+    } catch (error) {
+      logger.error(`sanitizeFilename tests failed: ${error instanceof Error ? error.message : String(error)}`);
+      return false;
+    }
+  }
+
+  /**
    * Helper method to check if a path exists
    */
   private async fileExists(filePath: string): Promise<boolean> {
@@ -508,6 +538,7 @@ class MusicSorterTestSuite {
       const metadataSuccess = await this.testMetadataService();
       const sorterSuccess = await this.testMusicSorter();
       const settingsSuccess = await this.testSettingsManager();
+      const sanitizeSuccess = await this.testSanitizeFilename();
       const errorHandlingSuccess = await this.testErrorHandling();
       
       // Summarize results
@@ -516,10 +547,11 @@ class MusicSorterTestSuite {
       logger.info(`MetadataService: ${metadataSuccess ? '✅ PASS' : '❌ FAIL'}`);
       logger.info(`MusicSorter: ${sorterSuccess ? '✅ PASS' : '❌ FAIL'}`);
       logger.info(`SettingsManager: ${settingsSuccess ? '✅ PASS' : '❌ FAIL'}`);
+      logger.info(`sanitizeFilename: ${sanitizeSuccess ? '✅ PASS' : '❌ FAIL'}`);
       logger.info(`Error Handling: ${errorHandlingSuccess ? '✅ PASS' : '❌ FAIL'}`);
-      
-      const allPassed = fileOpsSuccess && metadataSuccess && sorterSuccess && 
-                       settingsSuccess && errorHandlingSuccess;
+
+      const allPassed = fileOpsSuccess && metadataSuccess && sorterSuccess &&
+                       settingsSuccess && sanitizeSuccess && errorHandlingSuccess;
       
       logger.info(`\nOverall Result: ${allPassed ? '✅ ALL TESTS PASSED' : '❌ SOME TESTS FAILED'}`);
       
