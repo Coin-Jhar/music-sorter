@@ -37,7 +37,7 @@ print_header "Music Sorter Test Suite"
 echo -e "${YELLOW}Building the project...${RESET}"
 
 # Rebuild the project
-npm run rebuild
+pnpm run rebuild
 
 if [ $? -ne 0 ]; then
   print_error "Build failed. Cannot run tests."

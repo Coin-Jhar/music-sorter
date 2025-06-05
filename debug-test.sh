@@ -3,7 +3,7 @@
 
 # Rebuild the project
 echo "Rebuilding project..."
-npm run rebuild
+pnpm run rebuild
 
 # Run the sort with album-artist pattern
 echo "Testing album-artist sorting with debug..."
