@@ -1,7 +1,9 @@
 // src/config/constants.ts
+import { config } from './config';
+
 export const PATHS = {
-  SOURCE: '/data/data/com.termux/files/home/storage/music/Telegram',
-  TARGET: '/data/data/com.termux/files/home/storage/music/Telegram/sorted-music'
+  SOURCE: config.sourcePath,
+  TARGET: config.targetPath
 };
 
 export const SUPPORTED_EXTENSIONS = ['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac'];
