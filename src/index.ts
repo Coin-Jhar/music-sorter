@@ -11,7 +11,8 @@ async function main() {
       .name('music-sorter')
       .description('Sort and organize music files')
       .version('1.0.0')
-      .allowExcessArguments(false); // This prevents excess arguments errors
+      // Disallow extra arguments so unexpected inputs cause an error
+      .allowExcessArguments(false);
     
     setupCommands(program);
     
