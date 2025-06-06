@@ -282,7 +282,7 @@ export class MusicSorter extends BaseService {
         
         // Add filename to the path
         const fullPath = path.join(
-          'custom',
+          SORT_PATTERNS.CUSTOM_FOLDER,
           sanitizedPath,
           path.basename(file.path)
         );
