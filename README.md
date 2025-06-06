@@ -65,6 +65,8 @@ Run all unit and integration tests with:
 pnpm test
 ```
 
+The underlying `run-all-tests.sh` script uses **Bash**, so make sure it is installed and available on your system.
+
 ## License
 
 ISC
