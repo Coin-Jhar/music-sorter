@@ -177,7 +177,7 @@ async function runIntegrationTest() {
     // Test with invalid pattern
     try {
       const invalidOptions: SortOptions = {
-        pattern: 'invalid-pattern' as SortPattern,
+        pattern: 'invalid-pattern' as unknown as SortPattern,
         copyMode: true,
         nestedStructure: true,
         includeArtistInAlbumFolder: true
