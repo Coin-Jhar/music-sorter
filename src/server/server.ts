@@ -7,6 +7,8 @@ import { MusicSorter } from '../core/sorter';
 import { FileOperations } from '../utils/file-operations';
 import { MetadataService } from '../services/metadata-service';
 import { PATHS, SUPPORTED_EXTENSIONS } from '../config/constants';
+import { SortOptions } from '../models/music-file';
+import { buildSortOptions } from '../utils/sort-utils';
 import { logger } from '../utils/logger';
 import { settingsManager } from '../config/settings-manager';
 
@@ -130,28 +132,11 @@ export async function startServer(port: number = 3000): Promise<void> {
       
       const musicFiles = await metadataService.extractMetadata(files);
       logger.info(`Processing ${musicFiles.length} music files`);
-      
-      // Perform sorting based on pattern
-      switch (pattern) {
-        case 'artist':
-          await musicSorter.sortByArtist(musicFiles, copy);
-          break;
-        case 'album-artist':
-          await musicSorter.sortByAlbumArtist(musicFiles, copy);
-          break;
-        case 'album':
-          await musicSorter.sortByAlbum(musicFiles, copy);
-          break;
-        case 'genre':
-          await musicSorter.sortByGenre(musicFiles, copy);
-          break;
-        case 'year':
-          await musicSorter.sortByYear(musicFiles, copy);
-          break;
-        default:
-          throw new Error(`Unknown pattern: ${pattern}`);
-      }
-      
+
+      const sortOptions: SortOptions = buildSortOptions(pattern, !!copy);
+
+      await musicSorter.sortFiles(musicFiles, sortOptions);
+
       logger.success('Sorting operation completed successfully');
       res.json({ success: true, message: 'Sorting complete' });
     } catch (error) {
