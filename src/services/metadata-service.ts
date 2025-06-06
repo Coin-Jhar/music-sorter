@@ -7,7 +7,6 @@ import { SUPPORTED_EXTENSIONS } from '../config/constants';
 import { BaseService } from '../core/base-service';
 import { ServiceOptions } from '../core/types';
 import { AppError, ErrorCategory, createAppError } from '../utils/error-handler';
-import { sanitizeFilename } from '../utils/string-utils';
 
 interface ExtractMetadataOptions {
   skipCache?: boolean;

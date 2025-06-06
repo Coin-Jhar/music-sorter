@@ -151,6 +151,23 @@ class MusicSorterTestSuite {
       if (!destExists) {
         throw new Error(`Failed to copy file to ${destFile}.`);
       }
+
+      // Test file move
+      const moveTargetDir = path.join(this.targetDir, 'moved');
+      await this.fileOps.ensureDirectoryExists(moveTargetDir);
+      const sourceFileToMove = files[1];
+      const movedFile = path.join(moveTargetDir, path.basename(sourceFileToMove));
+      await this.fileOps.moveFile(
+        sourceFileToMove,
+        path.relative(this.targetDir, movedFile),
+        this.targetDir
+      );
+
+      const movedExists = await this.fileExists(movedFile);
+      const originalExists = await this.fileExists(sourceFileToMove);
+      if (!movedExists || originalExists) {
+        throw new Error(`Failed to move file to ${movedFile}.`);
+      }
       
       logger.success('FileOperations tests passed!');
       return true;
