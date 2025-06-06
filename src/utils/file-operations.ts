@@ -1,7 +1,7 @@
 // src/utils/file-operations.ts
 import fs from 'fs/promises';
 import path from 'path';
-import { PATHS } from '../config/constants';
+import { PATHS, MAX_CONCURRENT_OPERATIONS } from '../config/constants';
 import { logger } from './logger';
 import { AppError, ErrorCategory, createAppError } from './error-handler';
 
@@ -12,11 +12,11 @@ export class FileOperations {
     copied: number;
     failed: number;
   };
-  private operationBatchSize: number = 50;
+  private operationBatchSize: number;
   private activeOperations: Promise<void>[] = [];
   private targetRoot: string;
 
-  constructor(verbose = false, batchSize = 50, targetRoot = PATHS.TARGET) {
+  constructor(verbose = false, batchSize = MAX_CONCURRENT_OPERATIONS, targetRoot = PATHS.TARGET) {
     this.verbose = verbose;
     this.operationBatchSize = batchSize;
     this.targetRoot = targetRoot;
