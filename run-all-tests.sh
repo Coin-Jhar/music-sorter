@@ -33,6 +33,16 @@ mkdir -p ./test-logs
 # Start time
 start_time=$(date +%s)
 
+# Ensure dependencies are installed
+if [ ! -d node_modules ] || [ pnpm-lock.yaml -nt node_modules ]; then
+  echo -e "${YELLOW}Installing dependencies...${RESET}"
+  pnpm install --frozen-lockfile
+  if [ $? -ne 0 ]; then
+    print_error "Dependency installation failed."
+    exit 1
+  fi
+fi
+
 print_header "Music Sorter Test Suite"
 echo -e "${YELLOW}Building the project...${RESET}"
 
