@@ -292,7 +292,7 @@ class MusicSorterTestSuite {
       
       // Test sorting by artist
       const artistSortOptions: SortOptions = {
-        pattern: 'artist',
+        pattern: SortPattern.ARTIST,
         copyMode: true,
         nestedStructure: true,
         includeArtistInAlbumFolder: true
@@ -319,7 +319,7 @@ class MusicSorterTestSuite {
       
       // Test sorting by album
       const albumSortOptions: SortOptions = {
-        pattern: 'album',
+        pattern: SortPattern.ALBUM,
         copyMode: true,
         nestedStructure: true,
         includeArtistInAlbumFolder: true
@@ -346,7 +346,7 @@ class MusicSorterTestSuite {
       // Test error handling
       try {
         await this.musicSorter.sortFiles(musicFiles, {
-          pattern: 'invalid' as any,
+          pattern: 'invalid' as unknown as SortPattern,
           copyMode: true,
           nestedStructure: true,
           includeArtistInAlbumFolder: true

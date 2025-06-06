@@ -67,7 +67,7 @@ export enum SortPattern {
 }
 
 export interface SortOptions {
-  pattern: SortPattern | string;
+  pattern: SortPattern;
   copyMode: boolean;
   nestedStructure: boolean;
   includeArtistInAlbumFolder: boolean;
