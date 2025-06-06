@@ -6,7 +6,7 @@ import { FileOperations } from '../utils/file-operations';
 import { MetadataService } from '../services/metadata-service';
 import { PATHS } from '../config/constants';
 import { logger } from '../utils/logger';
-import { formatTemplate } from '../utils/string-utils';
+import { formatTemplate, sanitizeFilename } from '../utils/string-utils';
 import { MusicFile } from '../models/music-file';
 import { settingsManager } from '../config/settings-manager';
 
@@ -126,10 +126,4 @@ function generateFilename(file: MusicFile, pattern: string): string {
   // Generate filename from pattern and sanitize it
   const filename = formatTemplate(pattern, values);
   return sanitizeFilename(filename);
-}
-
-// Sanitize filename to remove invalid characters
-function sanitizeFilename(input: string): string {
-  // Replace characters that are not allowed in filenames
-  return input.replace(/[\\/:*?"<>|]/g, '_').trim();
 }
