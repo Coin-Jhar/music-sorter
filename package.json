@@ -17,7 +17,7 @@
     "debug:paths": "node dist/index.js debug --show-paths --test-paths",
     "debug:settings": "node dist/index.js debug --show-settings",
     "analyze": "node dist/index.js analyze",
-    "test": "sh ./run-all-tests.sh"
+    "test": "bash ./run-all-tests.sh"
   },
   "bin": {
     "music-sorter": "./dist/index.js"
