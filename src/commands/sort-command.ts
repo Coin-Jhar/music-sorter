@@ -6,6 +6,8 @@ import { FileOperations } from '../utils/file-operations';
 import { PATHS } from '../config/constants';
 import { logger } from '../utils/logger';
 import { settingsManager } from '../config/settings-manager';
+import { SortOptions } from '../models/music-file';
+import { buildSortOptions } from '../utils/sort-utils';
 
 export function sortCommand(program: Command): void {
   program
@@ -50,27 +52,11 @@ export function sortCommand(program: Command): void {
         logger.info('Extracting metadata...');
         const musicFiles = await metadataService.extractMetadata(files);
         logger.info(`Processed ${musicFiles.length} music files.`);
-        
-        switch (pattern) {
-          case 'artist':
-            await musicSorter.sortByArtist(musicFiles, copyMode);
-            break;
-          case 'album-artist':
-            await musicSorter.sortByAlbumArtist(musicFiles, copyMode);
-            break;
-          case 'album':
-            await musicSorter.sortByAlbum(musicFiles, copyMode);
-            break;
-          case 'genre':
-            await musicSorter.sortByGenre(musicFiles, copyMode);
-            break;
-          case 'year':
-            await musicSorter.sortByYear(musicFiles, copyMode);
-            break;
-          default:
-            logger.error(`Unknown pattern: ${pattern}`);
-        }
-        
+
+        const sortOptions: SortOptions = buildSortOptions(pattern, copyMode);
+
+        await musicSorter.sortFiles(musicFiles, sortOptions);
+
         logger.success('Sorting complete!');
       } catch (error) {
         logger.error('Error during sorting:', error as Error);
